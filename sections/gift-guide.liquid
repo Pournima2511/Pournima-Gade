@@ -1,0 +1,863 @@
+{% comment %}
+  Gift Guide / Shoppable Grid + Product Modal (Vanilla JS)
+  - All editable from theme customizer
+  - 6 product pickers
+  - Modal shows product, dynamic variant selectors
+  - Functional Add to Cart using fetch -> /cart/add.js
+{% endcomment %}
+
+<section id="gift-guide" class="gift-guide">
+  {%- style -%}
+    /* compact styles (same as prior) */
+    .gift-guide{--gap:24px; --max:1200px; --brand:#000; --accent:#ffde3b}
+    .gift-guide__topbar{background:#f5f5f5; border-bottom:1px solid #e5e5e5}
+    .gift-guide__topbar-inner{max-width:var(--max);margin:0 auto;padding:.5rem 1rem;display:flex;gap:.75rem;align-items:center;justify-content:space-between}
+    .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-logo img {
+  max-height: 40px;
+  width: auto;
+}
+    .gift-guide__topbar .note{font-size:.9rem; opacity:.8; text-align: center; flex: 1;}
+    .gift-guide__topbar .cta{background:var(--accent); padding:.5rem 1rem; display:inline-flex; align-items:center; gap:.5rem; transition:transform .25s ease}
+    .gift-guide__topbar .cta .arrow{display:inline-block; transform:translateX(0); transition:transform .25s ease}
+    .gift-guide__topbar .cta:hover{transform:translateY(-1px)}
+    .gift-guide__topbar .cta:hover .arrow{transform:translateX(4px)}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: none; /* hidden on desktop */
+}
+
+.logo-text {
+  font-weight: 700;   /* bold */
+  font-size: 1.25rem; /* adjust size as needed */
+  color: var(--brand);
+  text-transform: uppercase;
+}
+
+/* Desktop / Default */
+.desktop-only {
+  display: block;
+}
+
+.mobile-menu {
+  display: none;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-top: 1px solid #e5e5e5;
+  text-align: center;
+}
+
+/* Mobile adjustments */
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: none; /* hidden on desktop */
+}
+
+.mobile-menu {
+  display: none;
+}
+.mobile-menu.active {
+  display: block;
+}
+
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .menu-toggle {
+    display: block;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .gift-guide__topbar-inner {
+    /* justify-content: center; */
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .topbar-logo {
+    margin: 0 auto;
+    margin-left: 65px;
+  }
+
+  .gift-guide__topbar .note {
+  /*   display: none; hide note on mobile */
+  }
+
+  .gift-guide__topbar .cta {
+   /* display: none;  hide button on mobile, optional */
+  }
+}
+    .gift-guide__hero{ position: relative;text-align: center; height: 700px;}
+  .gift-guide__hero-banner img {width: 100%;height: 700px; display: block;}
+
+ .gift-guide__hero-inner {
+  position: absolute;
+  top: 65%;
+  left: 320px;
+  transform: translate(-50%, -50%);
+  color: #111;
+  background: rgba(255,255,255,0.6); /* overlay for text readability */
+  padding: 1rem 2rem;
+  text-align: left;
+}
+.gift-guide__hero-cta-mobile {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Utilities */
+.mobile-only { display: none!important; }
+.desktop-only { display: block!important; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+
+  .gift-guide__hero-text {
+    padding: 1.5rem 1rem;
+    background: #fff;
+  }
+
+  .gift-guide__hero-text h2 {
+    margin: 0 0 0.5rem;
+  }
+
+  .gift-guide__hero-inner {
+    display: none; /* hide desktop overlay */
+  }
+
+  .gift-guide__hero-cta-mobile {
+    padding: 1.5rem 1rem;
+    background: #fff;
+  }
+  .gift-guide__hero {
+    height: auto;
+}
+
+.gift-guide__grid-title {
+      text-align: center;
+}
+
+.gift-guide__hero-banner img {
+height: auto;
+}
+
+.gift-guide__cta {
+    top: -40px!important;
+}
+.gg-modal__body {
+    max-height: 40vh!important;
+}
+.gg-modal__dialog {
+    max-width: 300px!important;
+     margin: 0!important;
+}
+
+.gg-modal__media img {
+    height: 60%!important;
+}
+
+.gg-modal__variants {
+    margin-top: -40px!important;
+}
+}
+    .gift-guide__title{font-size:clamp(2rem, 6vw, 4rem); line-height:1.05; font-weight:800; letter-spacing:-.02em; margin:0 0 1.5rem}
+    .gift-guide__desc{max-width:44ch; color:#333; margin:0 0 1.5rem}
+    .gift-guide__cta{background:#111; color:#fff; padding:.9rem 3.2rem; align-items:center; position:relative; top:24px; overflow:hidden}
+    .gift-guide__cta .arrow{display:inline-block; transform:translateX(0); transition:transform .25s ease}
+    .gift-guide__cta:hover .arrow{transform:translateX(6px)}
+    .gift-guide__cta:after{content:""; position:absolute; inset:0; border:2px solid transparent; border-radius:.75rem; transition:border-color .25s ease}
+    .gift-guide__cta:hover:after{border-color:#111}
+
+    .gift-guide__strip{background:#f7f7f7;border-top:1px solid #eee;border-bottom:1px solid #eee}
+    .gift-guide__strip-inner{max-width:var(--max);margin:0 auto;padding:.6rem 1rem; text-align:center; font-size:.85rem; letter-spacing:.06em}
+
+    .gift-guide__grid-wrap{max-width:var(--max); margin:2.25rem auto; padding:0 1rem}
+    .gift-guide__grid-title{font-size:1.4rem; margin:0 0 1rem; font-weight:600}
+    .gift-guide__grid{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap)}
+    @media (max-width:900px){.gift-guide__grid{grid-template-columns:repeat(2,1fr)!important;}}
+    @media (max-width:640px){.gift-guide__grid{grid-template-columns:1fr;}}
+    .gift-guide__card{position:relative; cursor:pointer; background:#fff; border-radius:.75rem; overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.06)}
+    .gift-guide__img{aspect-ratio:1/1; width:100%; object-fit:cover; display:block; background:#fafafa}
+    .gift-guide__pin{position:absolute; top:15px; right:38px; width:30px; height:30px; border-radius:50%; background:#fff; display:grid; place-items:center; box-shadow:0 1px 6px rgba(0,0,0,.15)}
+    .gift-guide__pin:after{content:"+"; font-weight:700}
+
+    /* Modal */
+    .gg-modal{position:fixed; inset:0; display:none; z-index:9999}
+    .gg-modal[open]{display:block}
+    .gg-modal__overlay{position:absolute; inset:0; 
+      /* background:rgba(0,0,0,.45); 
+      backdrop-filter:saturate(1.2) blur(2px) */
+    }
+    .gg-modal__dialog{position:relative; max-width:420px;  background:#fff; border-radius:0; overflow:hidden; flex-direction: row;}
+    
+    .first-column{
+          display: flex;
+          flex-direction: row;
+    }
+   
+    .swatches {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.swatch {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  padding: 15px 50px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 60px; 
+}
+
+.swatch.active {
+  border: 2px solid black;
+}
+
+.swatch__color {
+  width: 15px;
+  height: 35px;
+  border: 1px solid #888;
+  display: inline-block;
+    flex-shrink: 0;
+        margin-left: -51px;
+    border-radius: 1px;
+}
+
+.swatch__label {
+  font-size: 14px;
+   line-height: 1;
+}
+
+.gg-modal__variants{
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.variant-dropdown {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #000;
+  border-radius: 5px;
+  font-size: 14px;
+    background-color: #fff;
+  color: #000;
+}
+
+.variant-dropdown option[disabled] {
+  color: #999;
+}
+
+    @media (max-width:900px){.gg-modal__dialog{grid-template-columns:1fr; margin:4vh 1rem}}
+    /* .gg-modal__media{background:#f7f7f7} */
+    .gg-modal__media img{width:100%; height:100%; }
+    .gg-modal__body{padding:1.25rem 1.25rem 1.5rem; max-height:80vh; overflow:auto}
+    .gg-modal__title{margin:0 0 .25rem; font-size:1.2rem}
+    .gg-modal__price{font-weight:700; margin:0 0 .75rem;  font-size: 1.1rem;}
+    .gg-modal__desc{font-size:.95rem; color:#444; margin:0 0 1rem}
+    .gg-modal__variants .field{margin-bottom:.75rem}
+    .gg-colors {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.3rem 0 1rem;
+}
+.gg-color {
+  border: 1px solid #111;
+  background: #fff;
+  padding: 0.5rem 4.1rem;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.field {
+  margin-bottom: 1rem;
+      flex-direction: column;
+    padding-left: 20px;
+}
+
+.field label{
+  font-size: 16px;
+}
+select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #111;
+}
+    .gg-modal__qty{display:flex; align-items:center; gap:.5rem; margin:.5rem 0 1rem}
+    .gg-modal__qty input{width:72px}
+    .gg-modal__actions{  margin-top: 1rem;  display: flex;
+  gap: 10px;}
+    .gg-btn{width: 100%;
+  justify-content: center;
+  border-radius: 0;
+  padding: 1rem;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;}
+    .gg-close{
+  right: 10px;
+  box-shadow: none;
+  position: absolute;
+    top: 0px;
+        }   
+         .sr-only{position:absolute!important; height:1px;width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px)}
+  {%- endstyle -%}
+
+  <!-- Top bar -->
+  <!-- Top bar -->
+<div class="gift-guide__topbar">
+  <div class="gift-guide__topbar-inner">
+
+    <!-- Left: Menu Icon (mobile) + Logo -->
+    <div class="topbar-left">
+      <button class="menu-toggle" aria-label="Toggle menu">
+        ☰
+      </button>
+
+      <div class="topbar-logo">
+        <a href="{{ routes.root_url }}">
+          <span class="logo-text">{{ section.settings.top_logo_text }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Middle: Note (desktop only) -->
+    <div class="note desktop-only">{{ section.settings.top_note }}</div>
+
+    <!-- Right: Button (desktop only) -->
+    {% if section.settings.top_cta_label != blank %}
+      <a class="cta desktop-only" href="{{ section.settings.top_cta_link | default: routes.all_products_collection_url }}">
+        <span>{{ section.settings.top_cta_label }}</span>
+        <span class="arrow">→</span>
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Mobile dropdown menu (hidden by default) -->
+  <div class="mobile-menu">
+    <div class="note">{{ section.settings.top_note }}</div>
+    {% if section.settings.top_cta_label != blank %}
+      <a class="cta" href="{{ section.settings.top_cta_link | default: routes.all_products_collection_url }}">
+        <span>{{ section.settings.top_cta_label }}</span>
+        <span class="arrow">→</span>
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+
+  <!-- Hero -->
+  <div class="gift-guide__hero">
+
+  <!-- Text block (mobile view will show here, desktop overlays inside) -->
+  <div class="gift-guide__hero-text mobile-only">
+    <h2 class="gift-guide__title">{{ section.settings.hero_title }}</h2>
+    <p class="gift-guide__desc">{{ section.settings.hero_desc }}</p>
+  </div>
+
+  <!-- Banner Image -->
+  <div class="gift-guide__hero-banner">
+    {% if section.settings.banner_image_desktop %}
+      <img 
+        src="{{ section.settings.banner_image_desktop | image_url: width: 2000 }}" 
+        alt="Hero Banner" 
+        class="desktop-only"
+        width="{{ section.settings.banner_image_desktop.width }}"
+        height="500"
+        loading="lazy">
+    {% endif %}
+
+    {% if section.settings.banner_image_mobile %}
+      <img 
+        src="{{ section.settings.banner_image_mobile | image_url: width: 800 }}" 
+        alt="Hero Banner Mobile" 
+        class="mobile-only"
+        width="{{ section.settings.banner_image_mobile.width }}"
+        height="{{ section.settings.banner_image_mobile.height }}"
+        loading="lazy">
+    {% endif %}
+  </div>
+
+  <!-- Text overlay for desktop -->
+  <div class="gift-guide__hero-inner desktop-only">
+    <h2 class="gift-guide__title">{{ section.settings.hero_title }}</h2>
+    <p class="gift-guide__desc">{{ section.settings.hero_desc }}</p>
+    {% if section.settings.hero_cta_label != blank %}
+      <a class="gift-guide__cta" href="{{ section.settings.hero_cta_link | default: routes.all_products_collection_url }}">
+        <span>{{ section.settings.hero_cta_label }}</span>
+        <span class="arrow">→</span>
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Button for mobile (below image) -->
+  {% if section.settings.hero_cta_label != blank %}
+    <div class="gift-guide__hero-cta-mobile mobile-only">
+      <a class="gift-guide__cta" href="{{ section.settings.hero_cta_link | default: routes.all_products_collection_url }}">
+        <span>{{ section.settings.hero_cta_label }}</span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+
+  <!-- Bottom strip -->
+  <div class="gift-guide__strip">
+    <div class="gift-guide__strip-inner">
+      {{ section.settings.bottom_strip }}
+    </div>
+  </div>
+
+  <!-- Grid -->
+  <div class="gift-guide__grid-wrap">
+    {% if section.settings.grid_title != blank %}
+      <h3 class="gift-guide__grid-title">{{ section.settings.grid_title }}</h3>
+    {% endif %}
+    <div class="gift-guide__grid" id="gg-grid" data-section-id="{{ section.id }}">
+      {%- for i in (1..6) -%}
+         {%- assign product_key = "product_" | append: i -%}
+        {%- assign p = section.settings[product_key] -%}
+        <article class="gift-guide__card" 
+                 {% if p %} data-product-handle="{{ all_products[p].handle }}" {% endif %}
+                 role="button" aria-label="Open {{ all_products[p].title | default: 'product' }}">
+          {%- if p and all_products[p].featured_image -%}
+            <img class="gift-guide__img" loading="lazy"
+                 src="{{ all_products[p].featured_image | img_url: '720x' }}"
+                 alt="{{ all_products[p].featured_image.alt | escape }}" width="100" height="200">
+          {%- else -%}
+            <div class="gift-guide__img" aria-hidden="true"></div>
+          {%- endif -%}
+          <div class="gift-guide__pin" aria-hidden="true"></div>
+        </article>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <dialog class="gg-modal" id="gg-modal">
+    <div class="gg-modal__overlay" data-gg-close></div>
+    <div class="gg-modal__dialog" role="document">
+      <button class="gg-close" type="button" aria-label="Close" data-gg-close>✕</button>
+    <div class="first-column">
+      <!-- Left: Product image -->  
+      <div class="gg-modal__media">
+        <img id="gg-media" alt="" >
+      </div>
+        <!-- Right: Product details -->
+      <div class="gg-modal__body">
+        <h3 class="gg-modal__title" id="gg-title"></h3>
+        <div class="gg-modal__price" id="gg-price"></div>
+        <div class="gg-modal__desc" id="gg-desc"></div>
+
+      </div>
+    </div>
+
+      
+        <form id="gg-form" class="gg-modal__variants" aria-live="polite">
+
+       
+        </form>
+
+    
+
+        <div class="gg-modal__actions">
+          <button id="gg-add" class="gg-btn" type="button">
+            <span>Add to cart</span> <span>→</span>
+          </button>
+          {% comment %} <button class="gg-btn gg-btn--ghost" type="button" data-gg-close>Keep browsing</button> {% endcomment %}
+        </div>
+    </div>
+  </dialog>
+
+  {%- javascript -%}
+  (function () {
+    // Vanilla JS only
+    const grid = document.getElementById('gg-grid');
+    const modal = document.getElementById('gg-modal');
+    const closeEls = modal.querySelectorAll('[data-gg-close]');
+    const media = document.getElementById('gg-media');
+    const title = document.getElementById('gg-title');
+    const priceEl = document.getElementById('gg-price');
+    const desc = document.getElementById('gg-desc');
+    const form = document.getElementById('gg-form');
+    const qtyEl = document.getElementById('gg-qty');
+    const addBtn = document.getElementById('gg-add');
+
+    // Map common Shopify color names to CSS values
+const COLOR_MAP = {
+  white: '#ffffff',
+  black: '#000000',
+  blue: '#0000ff',
+  red: '#ff0000',
+  green: '#008000',
+  yellow: '#ffff00',
+  pink: '#ffc0cb',
+  gray: '#808080',
+  grey: '#808080',
+  beige: '#f5f5dc',
+  brown: '#8b4513',
+  navy: '#000080',
+  purple: '#800080'
+  // 👉 you can extend this list as per your products
+};
+
+function getColorCode(name) {
+  if (!name) return '#ccc';
+  let key = name.trim().toLowerCase();
+  return COLOR_MAP[key] || key; // fallback: try raw value (works for "black", "white")
+}
+
+    let currentProduct = null; // product JSON
+    let currentVariant = null;
+
+    // try to format money via Shopify.formatMoney if available; fallback to price string
+    function formatPrice(variant) {
+      if (!variant) return '';
+      // Shopify's product JSON may return price as string "19.99" or number in cents.
+      if (window.Shopify && typeof window.Shopify.formatMoney === 'function' && typeof variant.price === 'number') {
+        try { return window.Shopify.formatMoney(variant.price); } catch (e) {}
+      }
+      // fallback: if price is number and seems cents -> display as /100
+      var p = variant.price;
+      if (typeof p === 'number') {
+        // Heuristic: if > 1000 treat as cents
+        if (p > 1000) return '₹' + (p / 100).toFixed(2);
+        return '₹' + p.toFixed(2);
+      }
+      // string fallback
+      return (p ? '₹' + p : '');
+    }
+
+    // Build variant selectors based on product.options (options array) or options_with_values
+    function renderOptions(product) {
+      form.innerHTML = '';
+      if (!product) return;
+
+      // product.options is an array of option names
+      var options = product.options || [];
+      if (!options.length) return;
+
+      options.forEach(function (optName, idx) {
+        var field = document.createElement('div');
+        field.className = 'field';
+
+        var label = document.createElement('label');
+            label.textContent = typeof optName === 'string' ? optName : (optName.name || 'Option ' + (idx + 1));
+        field.appendChild(label);
+
+       
+
+        // Determine unique values for this option from variants
+        var values = [];
+        (product.variants || []).forEach(function (v) {
+          var val = v['option' + (idx + 1)];
+          if (val && values.indexOf(val) === -1) values.push(val);
+        });
+
+       var isColorOption = label.textContent.toLowerCase().includes('color');
+      
+       var isSizeOption = label.textContent.toLowerCase().includes('size');
+
+
+        if (isColorOption) {
+      var swatchWrap = document.createElement('div');
+      swatchWrap.className = 'swatches';
+
+        values.forEach(function (val, i) {
+          var swatch = document.createElement('button');
+           swatch.type = 'button';
+        swatch.className = 'swatch';
+        swatch.dataset.index = idx;
+        swatch.dataset.value = val;
+        swatch.title = val;
+       swatch.innerHTML = `
+          <span class="swatch__color" style="background-color:${getColorCode(val)};"></span>
+          <span class="swatch__label">${val}</span>
+        `;
+        swatch.addEventListener('click', function () {
+          // clear active
+          swatchWrap.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
+          swatch.classList.add('active');
+          handleOptionChange();
+        });
+         if (i === 0) swatch.classList.add('active');
+        swatchWrap.appendChild(swatch);
+      });
+
+      field.appendChild(swatchWrap);
+    } 
+     else if (isSizeOption) {
+      // ---- Size as Dropdown ----
+      var select = document.createElement('select');
+      select.dataset.index = idx;
+      select.className = 'variant-dropdown';
+       // Add placeholder option
+  var placeholder = document.createElement('option');
+  placeholder.value = "";
+  placeholder.textContent = "Choose your size";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+      values.forEach(function (v) {
+        var o = document.createElement('option');
+        o.value = v;
+        o.textContent = v;
+        select.appendChild(o);
+      });
+
+      select.addEventListener('change', handleOptionChange);
+      field.appendChild(select);
+    }
+    else {
+      // Fallback → select
+      var select = document.createElement('select');
+      select.dataset.index = idx;
+      values.forEach(function (v) {
+        var o = document.createElement('option');
+        o.value = v;
+        o.textContent = v;
+        select.appendChild(o);
+      });
+      select.addEventListener('change', handleOptionChange);
+      field.appendChild(select);
+    }
+
+    form.appendChild(field);
+  });
+}
+    // choose variant based on selected option values; fall back to first variant
+  function getSelectedVariant(product) {
+  var chosen = [];
+
+  // Swatches
+  form.querySelectorAll('.swatch.active').forEach(function (s) {
+    chosen[s.dataset.index] = s.dataset.value;
+  });
+
+  // Dropdowns
+  form.querySelectorAll('select').forEach(function (s) {
+    chosen[s.dataset.index] = s.value;
+  });
+
+  return (product.variants || []).find(function (v) {
+    for (var i = 0; i < chosen.length; i++) {
+      if (chosen[i] && v['option' + (i + 1)] !== chosen[i]) return false;
+    }
+    return true;
+  }) || (product.variants && product.variants[0]) || null;
+}
+
+
+    function handleOptionChange() {
+      if (!currentProduct) return;
+      currentVariant = getSelectedVariant(currentProduct);
+      updateVariantUI();
+    }
+
+    function updateVariantUI() {
+      if (!currentVariant) return;
+      // set media if variant has featured_image (variant.featured_image may be object)
+      if (currentVariant.featured_image && currentVariant.featured_image.src) {
+        media.src = currentVariant.featured_image.src;
+      } else if (currentProduct && currentProduct.images && currentProduct.images.length) {
+        media.src = currentProduct.images[0];
+      } else {
+        media.removeAttribute('src');
+      }
+
+      priceEl.textContent = formatPrice(currentVariant);
+      addBtn.dataset.variantId = currentVariant.id;
+      addBtn.disabled = !currentVariant.available;
+      // If variant not available, update button text
+      addBtn.querySelector('span') && (addBtn.querySelector('span').textContent = currentVariant.available ? 'Add to cart' : 'Sold out');
+    }
+
+    function openModalWithProduct(product) {
+      currentProduct = product;
+      title.textContent = product.title || '';
+      desc.innerHTML = product.body_html || product.description || '';
+      // set default media
+      if (product.featured_image) {
+        if (typeof product.featured_image === 'string') media.src = product.featured_image;
+        else if (product.featured_image.src) media.src = product.featured_image.src;
+      } else if (product.images && product.images.length) {
+        media.src = product.images[0];
+      } else {
+        media.removeAttribute('src');
+      }
+
+      renderOptions(product);
+
+      // set default selects (first options)
+      // var selects = form.querySelectorAll('select');
+      // selects.forEach(function (s, i) {
+      //   // default to first option (already set), but if product.options_with_values exists, try match
+      //   if (product.options_with_values && product.options_with_values[i] && product.options_with_values[i].values && product.options_with_values[i].values.length) {
+      //     s.value = product.options_with_values[i].values[0];
+      //   }
+      // });
+
+      // choose variant & update UI
+      currentVariant = getSelectedVariant(product);
+      updateVariantUI();
+
+      // show modal using <dialog> when available
+      try {
+        if (typeof modal.showModal === 'function') modal.showModal();
+        else modal.setAttribute('open', '');
+      } catch (e) {
+        modal.setAttribute('open', '');
+      }
+    }
+
+    function closeModal() {
+      try {
+        if (typeof modal.close === 'function') modal.close();
+        else modal.removeAttribute('open');
+      } catch (e) {
+        modal.removeAttribute('open');
+      }
+    }
+
+    // Grid click -> fetch product JSON from /products/<handle>.js
+    if (grid) {
+      grid.addEventListener('click', function (evt) {
+        var card = evt.target.closest('.gift-guide__card');
+        if (!card) return;
+        var handle = card.dataset.productHandle;
+        if (!handle) return;
+        // fetch product JSON
+        fetch('/products/' + handle + '.js', { credentials: 'same-origin' })
+          .then(function (r) { if (!r.ok) throw new Error('Network'); return r.json(); })
+          .then(function (product) {
+            openModalWithProduct(product);
+          })
+          .catch(function (err) {
+            console.error('Failed to load product JSON', err);
+          });
+      });
+    }
+
+    // modal close buttons
+    closeEls.forEach(function (el) { el.addEventListener('click', closeModal); });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+
+    // Add to cart (AJAX)
+    addBtn.addEventListener('click', function () {
+      var variantId = addBtn.dataset.variantId;
+      if (!variantId) return;
+      var qty = parseInt(qtyEl.value, 10) || 1;
+
+      addBtn.disabled = true;
+      var originalText = addBtn.innerHTML;
+      addBtn.innerHTML = '<span>Adding…</span>';
+
+      fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ id: variantId, quantity: qty })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('Add failed');
+          return r.json();
+        })
+        .then(function (data) {
+          // success animation + optionally notify theme
+          addBtn.innerHTML = '<span>Added ✓</span>';
+          setTimeout(function () {
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
+          }, 900);
+          // dispatch cart event for theme listeners
+          document.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+        })
+        .catch(function (err) {
+          console.error('Add to cart failed', err);
+          addBtn.innerHTML = '<span>Try again</span>';
+          setTimeout(function () {
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
+          }, 900);
+        });
+    });
+
+    // Accessibility: close on Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.hasAttribute('open')) closeModal();
+    });
+
+  })();
+  {%- endjavascript -%}
+
+  <script>
+document.addEventListener("DOMContentLoaded", function() {
+  const toggleBtn = document.querySelector(".menu-toggle");
+  const mobileMenu = document.querySelector(".mobile-menu");
+
+  if (toggleBtn && mobileMenu) {
+    toggleBtn.addEventListener("click", function() {
+      mobileMenu.classList.toggle("active");
+    });
+  }
+});
+</script>
+
+
+  {% schema %}
+  {
+    "name": "Gift Guide",
+    "settings": [
+      { "type": "text", "id": "top_logo_text", "label": "Top bar logo text", "default": "TISSON VISON" },
+      { "type":"text", "id":"top_note", "label":"Top bar note", "default":"Find the ideal gift for your loved ones." },
+      { "type":"text", "id":"top_cta_label", "label":"Top bar button label", "default":"CHOOSE GIFT" },
+      { "type":"url",  "id":"top_cta_link",  "label":"Top bar button link" },
+      { "type": "image_picker", "id": "banner_image_desktop", "label": "Hero Banner (Desktop)" },
+       { "type": "image_picker", "id": "banner_image_mobile", "label": "Hero Banner (Mobile)" },
+      { "type":"color", "id":"banner_bg", "label":"Hero background color", "default":"#ffffff" },
+      { "type":"text", "id":"hero_title", "label":"Hero title", "default":"The Gift Guide" },
+      { "type":"textarea", "id":"hero_desc", "label":"Hero description", "default":"Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season." },
+      { "type":"text", "id":"hero_cta_label", "label":"Hero primary button label", "default":"SHOP NOW" },
+      { "type":"url",  "id":"hero_cta_link",  "label":"Hero primary button link" },
+
+      { "type":"text", "id":"bottom_strip", "label":"Bottom strip text", "default":"SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL" },
+
+      { "type":"text", "id":"grid_title", "label":"Grid heading", "default":"Tisso vison in the wild" },
+
+      { "type":"product", "id":"product_1", "label":"Grid Product 1" },
+      { "type":"product", "id":"product_2", "label":"Grid Product 2" },
+      { "type":"product", "id":"product_3", "label":"Grid Product 3" },
+      { "type":"product", "id":"product_4", "label":"Grid Product 4" },
+      { "type":"product", "id":"product_5", "label":"Grid Product 5" },
+      { "type":"product", "id":"product_6", "label":"Grid Product 6" }
+    ],
+    "presets": [
+      { "name": "Gift Guide (Shoppable Grid)" }
+    ]
+  }
+  {% endschema %}
+</section>
