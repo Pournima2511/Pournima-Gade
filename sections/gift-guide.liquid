@@ -486,7 +486,10 @@ select {
 
       
         <form id="gg-form" class="gg-modal__variants" aria-live="polite">
-
+<div class="field">
+  <label for="gg-qty">Quantity</label>
+  <input id="gg-qty" type="number" min="1" value="1">
+</div>
        
         </form>
 
@@ -778,43 +781,52 @@ function getColorCode(name) {
     });
 
     // Add to cart (AJAX)
-    addBtn.addEventListener('click', function () {
-      var variantId = addBtn.dataset.variantId;
-      if (!variantId) return;
-      var qty = parseInt(qtyEl.value, 10) || 1;
+addBtn.addEventListener('click', function () {
+  if (!currentProduct) return;
 
-      addBtn.disabled = true;
-      var originalText = addBtn.innerHTML;
-      addBtn.innerHTML = '<span>Adding…</span>';
+  // always refresh variant selection before adding
+  currentVariant = getSelectedVariant(currentProduct);
+  if (!currentVariant) {
+    alert("Please select a valid variant (color/size).");
+    return;
+  }
 
-      fetch('/cart/add.js', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ id: variantId, quantity: qty })
-      })
-        .then(function (r) {
-          if (!r.ok) throw new Error('Add failed');
-          return r.json();
-        })
-        .then(function (data) {
-          // success animation + optionally notify theme
-          addBtn.innerHTML = '<span>Added ✓</span>';
-          setTimeout(function () {
-            addBtn.innerHTML = originalText;
-            addBtn.disabled = false;
-          }, 900);
-          // dispatch cart event for theme listeners
-          document.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
-        })
-        .catch(function (err) {
-          console.error('Add to cart failed', err);
-          addBtn.innerHTML = '<span>Try again</span>';
-          setTimeout(function () {
-            addBtn.innerHTML = originalText;
-            addBtn.disabled = false;
-          }, 900);
-        });
+  var variantId = currentVariant.id;
+  var qty = parseInt(qtyEl?.value, 10) || 1;
+
+  addBtn.disabled = true;
+  var originalText = addBtn.innerHTML;
+  addBtn.innerHTML = '<span>Adding…</span>';
+
+  fetch('/cart/add.js', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ id: variantId, quantity: qty })
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error('Add failed');
+      return r.json();
+    })
+    .then(function (data) {
+      addBtn.innerHTML = '<span>Added ✓</span>';
+      setTimeout(function () {
+        addBtn.innerHTML = originalText;
+        addBtn.disabled = false;
+      }, 900);
+
+      // update cart drawer/page if your theme supports it
+      document.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+    })
+    .catch(function (err) {
+      console.error('Add to cart failed', err);
+      addBtn.innerHTML = '<span>Try again</span>';
+      setTimeout(function () {
+        addBtn.innerHTML = originalText;
+        addBtn.disabled = false;
+      }, 900);
     });
+});
+
 
     // Accessibility: close on Escape
     document.addEventListener('keydown', function (e) {
