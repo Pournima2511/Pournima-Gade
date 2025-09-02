@@ -781,6 +781,7 @@ function getColorCode(name) {
     });
 
     // Add to cart (AJAX)
+// Add to cart (AJAX + Redirect to Cart Page)
 addBtn.addEventListener('click', function () {
   if (!currentProduct) return;
 
@@ -807,15 +808,9 @@ addBtn.addEventListener('click', function () {
       if (!r.ok) throw new Error('Add failed');
       return r.json();
     })
-    .then(function (data) {
-      addBtn.innerHTML = '<span>Added ✓</span>';
-      setTimeout(function () {
-        addBtn.innerHTML = originalText;
-        addBtn.disabled = false;
-      }, 900);
-
-      // update cart drawer/page if your theme supports it
-      document.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+    .then(function () {
+      // ✅ Redirect to cart page after success
+      window.location.href = '/cart';
     })
     .catch(function (err) {
       console.error('Add to cart failed', err);
